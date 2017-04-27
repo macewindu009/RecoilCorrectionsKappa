@@ -9,7 +9,7 @@
 //#include <map>
 
 
-void RecoilCorrectorRoot(TString baseString = "recoilMvaZ",
+void PFRecoilCorrectorRoot(TString baseString = "recoilZ",
                          TString Suffix = ""
                          ) {
 
@@ -104,8 +104,9 @@ void RecoilCorrectorRoot(TString baseString = "recoilMvaZ",
     TString treeName = "ntuple";
 
     //VariableName in Kappa - Distinguish between parallel and perpendicular component
-    TString proj[2] = {"recoilPar+ptvis",
-                        "recoilPerp"};
+    TString proj[2] = {"pfrecoilPar+ptvis",
+                             "pfrecoilPerp"};
+
     //Local reference
     TString projLabel[2] = {baseString+"Paral",
                   baseString+"Perp"};
@@ -136,11 +137,9 @@ void RecoilCorrectorRoot(TString baseString = "recoilMvaZ",
 
 
     //Histograms saving the label names, needed later in the official toolkit
-    TString ProjToolkit[2] = {baseString+"Paral",
-                  baseString+"Perp"};
     TH1D * projH = new  TH1D("projH","",2,-1,1);
     for (int i=0; i<2; ++i)
-        projH->GetXaxis()->SetBinLabel(i+1,ProjToolkit[i]);
+        projH->GetXaxis()->SetBinLabel(i+1,projLabel[i]);
 
     int nZPtBins = 5;
     float zPtBins[6] = {0,10,20,30,50,1000};

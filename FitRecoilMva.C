@@ -184,12 +184,15 @@ void FitRecoil(TFile * fileOutput,
   }
   else if (model==1) {
     fitFunc1->SetParameter(0,xMax);
-    fitFunc1->SetParameter(1,0.6*rms);
-    fitFunc1->SetParameter(2,2*rms);
+    fitFunc1->SetParameter(1,0.3*rms);
+    //fitFunc1->SetParLimits(1,0,100);
+    fitFunc1->SetParameter(2,rms);
+    //fitFunc1->SetParLimits(2,0,100);
     fitFunc1->SetParameter(3,fract);
     fitFunc1->SetParLimits(3,0.05,0.95);
   }
   else if (model==2) {
+/*	
     fitFunc1->SetParameter(0,xMax);
     fitFunc1->SetParameter(1,x0);
     fitFunc1->SetParameter(2,0.7*rms);
@@ -207,6 +210,45 @@ void FitRecoil(TFile * fileOutput,
     fitFunc1->SetParLimits(8,0.05,0.95);
     fitFunc1->SetParameter(9,fract);
     fitFunc1->SetParLimits(9,0.05,0.95);
+	*/	
+	  
+    fitFunc1->SetParameter(0,xMax);
+    fitFunc1->SetParameter(1,x0-fract*rms);
+    fitFunc1->SetParameter(2,0.8*rms);
+    fitFunc1->SetParLimits(2,0.5*rms,1.5*rms);
+    fitFunc1->SetParameter(3,2*rms);
+    fitFunc1->SetParLimits(3,1.5*rms,4*rms);
+    fitFunc1->SetParameter(4,x0+fract*rms);
+    fitFunc1->SetParameter(5,0.8*rms);
+    fitFunc1->SetParLimits(5,0.5*rms,1.5*rms);
+    fitFunc1->SetParameter(6,2*rms);
+    fitFunc1->SetParLimits(6,1.5*rms,4*rms);
+    fitFunc1->SetParameter(7,x0-fract*rms);
+    fitFunc1->SetParLimits(7,0.05,0.95);
+    fitFunc1->SetParameter(8,fract);
+    fitFunc1->SetParLimits(8,0.05,0.95);
+    fitFunc1->SetParameter(9,fract);
+    fitFunc1->SetParLimits(9,0.05,0.95);
+/*
+
+    fitFunc1->SetParameter(0,xMax);
+    fitFunc1->SetParameter(1,1.1*x0);
+    fitFunc1->SetParameter(2,0.8*rms);
+    fitFunc1->SetParLimits(2,0.5*rms,1.5*rms);
+    fitFunc1->SetParameter(3,2*rms);
+    fitFunc1->SetParLimits(3,1.5*rms,4*rms);
+    fitFunc1->SetParameter(4,1.1*x0);
+    fitFunc1->SetParameter(5,0.8*rms);
+    fitFunc1->SetParLimits(5,0.5*rms,1.5*rms);
+    fitFunc1->SetParameter(6,2*rms);
+    fitFunc1->SetParLimits(6,1.5*rms,4*rms);
+    fitFunc1->SetParameter(7,fract);
+    fitFunc1->SetParLimits(7,0.02,0.98);
+    fitFunc1->SetParameter(8,fract);
+    fitFunc1->SetParLimits(8,0.02,0.98);
+    fitFunc1->SetParameter(9,fract);
+    fitFunc1->SetParLimits(9,0.05,0.95);
+	*/
   }
   else {
     fitFunc1->SetParameter(0,xMax);
@@ -340,11 +382,22 @@ void FitRecoil(TFile * fileOutput,
   canv->Print(baseString+Suffix+"/"+histName+"_fit.png");
 
 
+  cout << "RMS: " << rms << endl;
+  cout << "xMax: " << xMax << endl;
+  cout << "fract: " << fract << endl;
   std::cout << "Integral (data) = " << fitFunc1->Integral(xminF,xmaxF) << std::endl;
   std::cout << "Integral (MC)   = " << fitFunc2->Integral(xminF,xmaxF) << std::endl;
 
   fitFunc1->SetParameter(0,fitFunc1->GetParameter(0)/fitFunc1->Integral(xminF,xmaxF));
   fitFunc2->SetParameter(0,fitFunc2->GetParameter(0)/fitFunc2->Integral(xminF,xmaxF));
+
+  cout << "Data Parameters: " << endl;
+  for (int i= 0; i < fitFunc1->GetNumberFreeParameters(); i++)
+	  cout << "Parameter " << i << ": " << fitFunc1->GetParameter(i) << endl;
+
+  cout << "MC Parameters: " << endl;
+  for (int i= 0; i < fitFunc2->GetNumberFreeParameters(); i++)
+	  cout << "Parameter " << i << ": " << fitFunc2->GetParameter(i)<< endl;
 
   std::cout << "Integral (data) = " << fitFunc1->Integral(xminF,xmaxF) << std::endl;
   std::cout << "Integral (MC)   = " << fitFunc2->Integral(xminF,xmaxF) << std::endl;

@@ -9,12 +9,13 @@
 //#include <map>
 
 
-void RecoilCorrectorRoot(TString baseString = "recoilMvaZ",
+void makePFMetSys(TString baseString = "PFMetSys",
                          TString Suffix = ""
                          ) {
 
+
     //File directory to the merged KappaInputFolder.
-    std::string fileDir = "/storage/jbod/nzaeh/NAFNoCorr0805merged/";
+    std::string fileDir = "/storage/jbod/nzaeh/NAFOwnCorr2605/merged/";
     cout << "Input Directory: " << fileDir << endl;
     //cout << ztt_stitchingweight() << endl;
     //
@@ -145,7 +146,7 @@ void RecoilCorrectorRoot(TString baseString = "recoilMvaZ",
         projH->GetXaxis()->SetBinLabel(i+1,ProjToolkit[i]);
 
     int nZPtBins = 5;
-    float zPtBins[6] = {0,10,20,30,50,1000};
+    float zPtBins[6] = {0,10,20,30,50,100};
     TH1D * ZPtBinsH = new TH1D("ZPtBinsH","ZPtBinsH",nZPtBins,zPtBins);
     for (int iB=0; iB<nZPtBins; ++iB) 
         ZPtBinsH->GetXaxis()->SetBinLabel(iB+1,ptCutLabel[iB]);
@@ -156,23 +157,120 @@ void RecoilCorrectorRoot(TString baseString = "recoilMvaZ",
     for (int iB=0; iB<nJetBins; ++iB)
         JetBinsH->GetXaxis()->SetBinLabel(iB+1,jetCutLabel[iB]);
 
+	JetBinsH->Write();
+
+
+	TString BkgType = "WJet";
+	
+	for(int jetCutIndex = 0; jetCutIndex < sizeof(jetCut)/sizeof(*jetCut); jetCutIndex++)
+	{
+		TH1D * histResponse = new TH1D(BkgType+"_"+jetCutLabel[jetCutIndex],"",nZPtBins,zPtBins);
+		for(int ptCutIndex = 0; ptCutIndex < sizeof(ptCut)/sizeof(*ptCut); ptCutIndex++) {
+			TString histName = jetCutLabel[jetCutIndex]+ptCutLabel[ptCutIndex]; 
+			TH1D* histAll = new TH1D(histName+"Data","",100,-1,3);
+			for(std::vector<TString>::iterator element = BkgWJet.begin(); element != BkgWJet.end(); element++)
+			{
+				//fileName = <FileDir> + <Nickname>/<Nickname>.root
+				TString fileName = fileDir + *element + "/" + *element + ".root";
+				TFile * fileData   = new TFile(fileName);
+				if (!fileData->IsOpen())
+				{
+					cout << "File does not exist: " << fileName << endl;
+					return;
+				}
+
+				//Get Tree
+				TTree* tree = (TTree*)gDirectory->Get(channel + "/" + treeName);
+
+				//Draw Hist with defined Cuts on Pt and Jets and name it "histTemp". Same Binning as the histData histogram. Multiply events by their weight
+				//tree->Draw("metPlusVisLepsOnGenBosonPtOverGenBosonPt>>histTemp(100,-1,3)",ptCut[ptCutIndex]+"*"+jetCut[jetCutIndex]+"*eventWeight*"+generalCut +"*" + wj_stitchingweight());
+				tree->Draw("pfmetPlusVisLepsOnGenBosonPtOverGenBosonPt>>histTemp(100,-1,3)",ptCut[ptCutIndex]+"*"+jetCut[jetCutIndex]+"*eventWeight*"+generalCut +"*" + wj_stitchingweight());
+				TH1D* histPart = (TH1D*)gDirectory->Get("histTemp");
+				//cout << histPart->GetEntries() << endl;
+				cout << "Sample: " << *element << " - Entries(weighted): " <<  histPart->GetSumOfWeights()*lumi <<  " - Whole " << histAll->GetSumOfWeights() << endl;
+				//Subtract the temporary loaded File from the global histData multiplied with the lumi section
+				histAll->Add(histAll,histPart,1,lumi);
+
+
+				cout << "Sample: " << *element << " - Entries(weighted): " <<  histPart->GetSumOfWeights()*lumi <<  " - Whole " << histAll->GetSumOfWeights() << endl;
+				//Delete temporary file
+				delete fileData;
+
+            }
+			histResponse->SetBinContent(ptCutIndex+1,histAll->GetMean());
+			cout << histAll->GetMean() << endl;
+			histResponse->SetBinError(ptCutIndex+1,histAll->GetRMS()/TMath::Sqrt(histAll->GetEntries()));
+			delete histAll;
+		}
+		histResponse->GetYaxis()->SetRangeUser(0,2);
+		fileOutput->cd();
+		histResponse->Write();
+		delete histResponse;
+	}
+
+	BkgType = "V";
+
+	for(int jetCutIndex = 0; jetCutIndex < sizeof(jetCut)/sizeof(*jetCut); jetCutIndex++)
+	{
+		TH1D * histResponse = new TH1D(BkgType+"_"+jetCutLabel[jetCutIndex],"",nZPtBins,zPtBins);
+		for(int ptCutIndex = 0; ptCutIndex < sizeof(ptCut)/sizeof(*ptCut); ptCutIndex++) {
+			TString histName = jetCutLabel[jetCutIndex]+ptCutLabel[ptCutIndex]; 
+			TH1D* histAll = new TH1D(histName+"Data","",100,-1,3);
+			for(std::vector<TString>::iterator element = DY.begin(); element != DY.end(); element++)
+			{
+				//fileName = <FileDir> + <Nickname>/<Nickname>.root
+				TString fileName = fileDir + *element + "/" + *element + ".root";
+				TFile * fileData   = new TFile(fileName);
+				if (!fileData->IsOpen())
+				{
+					cout << "File does not exist: " << fileName << endl;
+					return;
+				}
+
+				//Get Tree
+				TTree* tree = (TTree*)gDirectory->Get(channel + "/" + treeName);
+
+				//Draw Hist with defined Cuts on Pt and Jets and name it "histTemp". Same Binning as the histData histogram. Multiply events by their weight
+				//tree->Draw("metPlusVisLepsOnGenBosonPtOverGenBosonPt>>histTemp(100,-1,3)",ptCut[ptCutIndex]+"*"+jetCut[jetCutIndex]+"*eventWeight*"+generalCut +"*" + wj_stitchingweight());
+				tree->Draw("pfmetPlusVisLepsOnGenBosonPtOverGenBosonPt>>histTemp(100,-1,3)",ptCut[ptCutIndex]+"*"+jetCut[jetCutIndex]+"*eventWeight*"+generalCut +"*" + zll_genmatchMM() + "*" + zll_stitchingweight()  + "*zPtReweightWeight");
+				TH1D* histPart = (TH1D*)gDirectory->Get("histTemp");
+				//cout << histPart->GetEntries() << endl;
+				cout << "Sample: " << *element << " - Entries(weighted): " <<  histPart->GetSumOfWeights()*lumi <<  " - Whole " << histAll->GetSumOfWeights() << endl;
+				//Subtract the temporary loaded File from the global histData multiplied with the lumi section
+				histAll->Add(histAll,histPart,1,lumi);
+
+
+				cout << "Sample: " << *element << " - Entries(weighted): " <<  histPart->GetSumOfWeights()*lumi <<  " - Whole " << histAll->GetSumOfWeights() << endl;
+				//Delete temporary file
+				delete fileData;
+
+            }
+			histResponse->SetBinContent(ptCutIndex+1,histAll->GetMean());
+			cout << histAll->GetMean() << endl;
+			histResponse->SetBinError(ptCutIndex+1,histAll->GetRMS()/TMath::Sqrt(histAll->GetEntries()));
+			delete histAll;
+		}
+		histResponse->GetYaxis()->SetRangeUser(0,2);
+		fileOutput->cd();
+		histResponse->Write();
+		delete histResponse;
+	}
     //zBinsH->Write("ZPtBinsH");
     //jetBinsH->Write("nJetBinsH");
-    /* 
+    /*
     int projIndex = 0;
     int ptCutIndex = 0;
-    int jetCutIndex = 1;
+    int jetCutIndex = 0;
     */
     //Iterations over proj, ptCut and jetCut
-	//
-	
     // Index which projection is currently used
+
+	/*
     for(int projIndex = 0; projIndex < sizeof(proj)/sizeof(*proj); projIndex++)
         // Index which pt cut is currently applied
         for(int ptCutIndex = 0; ptCutIndex < sizeof(ptCut)/sizeof(*ptCut); ptCutIndex++)
             // Index which jet cut is currently applied
             for(int jetCutIndex = 0; jetCutIndex < sizeof(jetCut)/sizeof(*jetCut); jetCutIndex++)
-			
             {
                 //HistName to refer to
                 TString histName = projLabel[projIndex]+"_"+jetCutLabel[jetCutIndex]+ptCutLabel[ptCutIndex]; 
@@ -376,9 +474,11 @@ void RecoilCorrectorRoot(TString baseString = "recoilMvaZ",
                 delete histData;
 
             }
-    fileOutput->Write();
+	*/
+    //fileOutput->Write();
     fileOutput->Close();
 
 }
+
 
 

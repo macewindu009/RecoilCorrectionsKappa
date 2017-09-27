@@ -31,7 +31,7 @@ TString wj_stitchingweight()
 //Gen matching for muons being prompt muons
 TString zll_genmatchMM()
 {
-    return "(gen_match_1 < 4 || gen_match_2 < 4)";
+    return "(gen_match_1 < 3 || gen_match_2 < 3)";
 }
 
 //Gen matching for muons coming from taus

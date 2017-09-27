@@ -14,7 +14,7 @@ void PFRecoilCorrectorRoot(TString baseString = "recoilZ",
                          ) {
 
     //File directory to the merged KappaInputFolder.
-    std::string fileDir = "/storage/jbod/nzaeh/NAFPF1204NoCorr/merged/";
+    std::string fileDir = "/storage/jbod/nzaeh/NAFNoCorr0805merged/";
     cout << "Input Directory: " << fileDir << endl;
     //cout << ztt_stitchingweight() << endl;
     //
@@ -26,17 +26,29 @@ void PFRecoilCorrectorRoot(TString baseString = "recoilZ",
     TFile * fileOutput = new TFile(baseString+Suffix+".root","recreate");
     fileOutput->cd("");
     //List of all Data input. List all Datasets nicks and add their corresponding cross section.
+	
     std::vector<TString> Data = {
-        "SingleMuon_Run2016B_23Sep2016v3_13TeV_MINIAOD",
-        "SingleMuon_Run2016C_23Sep2016v1_13TeV_MINIAOD",
-        "SingleMuon_Run2016D_23Sep2016v1_13TeV_MINIAOD",
-        "SingleMuon_Run2016E_23Sep2016v1_13TeV_MINIAOD",
-        "SingleMuon_Run2016F_23Sep2016v1_13TeV_MINIAOD",
-        "SingleMuon_Run2016G_23Sep2016v1_13TeV_MINIAOD",
-        "SingleMuon_Run2016H_PromptRecov2_13TeV_MINIAOD",
-        "SingleMuon_Run2016H_PromptRecov3_13TeV_MINIAOD"
+			"SingleMuon_Run2016B_03Feb2017ver2v2_13TeV_MINIAOD",
+			"SingleMuon_Run2016C_03Feb2017v1_13TeV_MINIAOD",
+			"SingleMuon_Run2016D_03Feb2017v1_13TeV_MINIAOD",
+			"SingleMuon_Run2016E_03Feb2017v1_13TeV_MINIAOD",
+			"SingleMuon_Run2016F_03Feb2017v1_13TeV_MINIAOD",
+			"SingleMuon_Run2016G_03Feb2017v1_13TeV_MINIAOD",
+			"SingleMuon_Run2016H_03Feb2017ver2v1_13TeV_MINIAOD",
+			"SingleMuon_Run2016H_03Feb2017ver3v1_13TeV_MINIAOD"
     };
-
+	/*
+    std::vector<TString> Data = {
+			"SingleMuon_Run2016B_23Sep2016v3_13TeV_MINIAOD",
+			"SingleMuon_Run2016C_23Sep2016v1_13TeV_MINIAOD",
+			"SingleMuon_Run2016D_23Sep2016v1_13TeV_MINIAOD",
+			"SingleMuon_Run2016E_23Sep2016v1_13TeV_MINIAOD",
+			"SingleMuon_Run2016F_23Sep2016v1_13TeV_MINIAOD",
+			"SingleMuon_Run2016G_23Sep2016v1_13TeV_MINIAOD",
+			"SingleMuon_Run2016H_PromptRecov2_13TeV_MINIAOD",
+			"SingleMuon_Run2016H_PromptRecov3_13TeV_MINIAOD"
+    };
+	*/
     //List of all background samples. List all Datasets nicks and add their corresponding cross section.
     std::vector<TString> Bkg = {
             "VVTo2L2Nu_RunIISummer16MiniAODv2_PUMoriond17_13TeV_MINIAOD_amcatnlo-pythia8",
@@ -111,6 +123,8 @@ void PFRecoilCorrectorRoot(TString baseString = "recoilZ",
     TString projLabel[2] = {baseString+"Paral",
                   baseString+"Perp"};
 
+	//general weight strings
+	TString generalCut = "(m_vis > 70.0)*(m_vis < 110.0)*(iso_2 < 0.15)*(iso_1 < 0.15)*((q_1*q_2)<0.0)";
 
     //Pt-Cuts - 0to10, 10to20, 20to30, 30to50, Greater50 GeV
     TString ptCut[5] = {"(ptvis > 0) * (ptvis <= 10)",
@@ -155,11 +169,11 @@ void PFRecoilCorrectorRoot(TString baseString = "recoilZ",
 
     //zBinsH->Write("ZPtBinsH");
     //jetBinsH->Write("nJetBinsH");
-    /*
-    int projIndex = 0;
-    int ptCutIndex = 0;
-    int jetCutIndex = 0;
-    */
+    
+    int projIndex = 1;
+    int ptCutIndex = 4;
+    int jetCutIndex = 2;
+    
     //Iterations over proj, ptCut and jetCut
     // Index which projection is currently used
     for(int projIndex = 0; projIndex < sizeof(proj)/sizeof(*proj); projIndex++)
@@ -198,7 +212,7 @@ void PFRecoilCorrectorRoot(TString baseString = "recoilZ",
                     TTree* tree = (TTree*)gDirectory->Get(channel + "/" + treeName);
 
                     //Draw Hist with defined Cuts on Pt and Jets and name it "histTemp". Same Binning as the histData histogram
-                    tree->Draw(proj[projIndex] + ">>histTemp(100,-200,200)",ptCut[ptCutIndex]+"*"+jetCut[jetCutIndex]);
+                    tree->Draw(proj[projIndex] + ">>histTemp(100,-200,200)",ptCut[ptCutIndex]+"*"+jetCut[jetCutIndex]+"*"+generalCut);
                     TH1D* histPart = (TH1D*)gDirectory->Get("histTemp");
 
 
@@ -233,7 +247,7 @@ void PFRecoilCorrectorRoot(TString baseString = "recoilZ",
                     TTree* tree = (TTree*)gDirectory->Get(channel + "/" + treeName);
 
                     //Draw Hist with defined Cuts on Pt and Jets and name it "histTemp". Same Binning as the histData histogram. Multiply events by their weight
-                    tree->Draw(proj[projIndex] + ">>histTemp(100,-200,200)",ptCut[ptCutIndex]+"*"+jetCut[jetCutIndex]+"*weight");
+                    tree->Draw(proj[projIndex] + ">>histTemp(100,-200,200)",ptCut[ptCutIndex]+"*"+jetCut[jetCutIndex]+"*eventWeight*" + generalCut);
                     TH1D* histPart = (TH1D*)gDirectory->Get("histTemp");
 
                     //Subtract the temporary loaded File from the global histData multiplied with the lumi section
@@ -266,7 +280,7 @@ void PFRecoilCorrectorRoot(TString baseString = "recoilZ",
                     TTree* tree = (TTree*)gDirectory->Get(channel + "/" + treeName);
 
                     //Draw Hist with defined Cuts on Pt and Jets and name it "histTemp". Same Binning as the histData histogram. Multiply events by their weight
-                    tree->Draw(proj[projIndex] + ">>histTemp(100,-200,200)",ptCut[ptCutIndex]+"*"+jetCut[jetCutIndex]+"*weight*" + wj_stitchingweight());
+                    tree->Draw(proj[projIndex] + ">>histTemp(100,-200,200)",ptCut[ptCutIndex]+"*"+jetCut[jetCutIndex]+"*eventWeight*" + generalCut + "*" + wj_stitchingweight());
                     TH1D* histPart = (TH1D*)gDirectory->Get("histTemp");
 
                     //Subtract the temporary loaded File from the global histData multiplied with the lumi section
@@ -300,7 +314,7 @@ void PFRecoilCorrectorRoot(TString baseString = "recoilZ",
 
                     //Draw Hist with defined Cuts on Pt and Jets and name it "histTempSig". Same Binning as the histDY histogram. Multiply events by their weight
                     //Also apply stitching on DY Samples and gen matching on mumu.
-                    tree->Draw(proj[projIndex] + ">>histTempSig(100,-200,200)",ptCut[ptCutIndex] + "*" + jetCut[jetCutIndex] + "*weight*" + zll_genmatchMM() + "*" + zll_stitchingweight());
+                    tree->Draw(proj[projIndex] + ">>histTempSig(100,-200,200)",ptCut[ptCutIndex] + "*" + jetCut[jetCutIndex] + "*eventWeight*" + generalCut + "*" + zll_genmatchMM() + "*" + zll_stitchingweight() + "*zPtReweightWeight");
                     TH1D* histPartSig = (TH1D*)gDirectory->Get("histTempSig");
 
                     //Add the temporary loaded File to the global histDY multiplied with the lumi section
@@ -311,7 +325,7 @@ void PFRecoilCorrectorRoot(TString baseString = "recoilZ",
                     //Background events from mumu coming from taus.
                     //Draw Hist with defined Cuts on Pt and Jets and name it "histTempBkg". Same Binning as the histDY histogram. Multiply events by their weight
                     //Also apply stitching on DY Samples and gen matching on tautau
-                    tree->Draw(proj[projIndex] + ">>histTempBkg(100,-200,200)",ptCut[ptCutIndex] + "*" + jetCut[jetCutIndex] + "*weight*" + ztt_genmatchMM() + "*" + ztt_stitchingweight());
+                    tree->Draw(proj[projIndex] + ">>histTempBkg(100,-200,200)",ptCut[ptCutIndex] + "*" + jetCut[jetCutIndex] + "*eventWeight*" + generalCut + "*" + ztt_genmatchMM() + "*" + ztt_stitchingweight() + "*zPtReweightWeight");
                     TH1D* histPartBkg = (TH1D*)gDirectory->Get("histTempBkg");
 
 
@@ -340,14 +354,15 @@ void PFRecoilCorrectorRoot(TString baseString = "recoilZ",
                 system(makeDir.Data());
 
 
+                //SaveInputPlot(histName, histData, histDY, saveDir, projIndex);
                 SaveInputPlot(histName, histData, histDY, saveDir, projIndex);
 
                 bool fit = true;
                 bool rebin = false;
                 bool logY = false;
-                int model = 2;
+                int model = 0;
                 TString xtit[2] = {"U_{1} [GeV]","U_{2} [GeV]"};
-                if (projIndex==1) model = 3;
+                if (projIndex==1) model = 1;
                 //	int model = 3;
                 FitRecoil(fileOutput,
                       baseString,
@@ -355,12 +370,12 @@ void PFRecoilCorrectorRoot(TString baseString = "recoilZ",
                       histData,
                       histDY,
                       histName,
-                      -100,
-                      100,
+                      -120,
+                      120,
                       xtit[projIndex],
                       "Events",
-                      -160,
-                      160,
+                      -180,
+                      180,
                       model,
                       rebin,
                       fit,
